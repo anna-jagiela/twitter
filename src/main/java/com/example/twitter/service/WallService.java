@@ -8,12 +8,12 @@ import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.reverseOrder;
+import static java.util.Comparator.comparing;
 
 @Service
 public class WallService {
@@ -38,11 +38,11 @@ public class WallService {
 
     public List<Tweet> tweetsOnTheWall(@NonNull final String userName) {
         List<Tweet> tweets =  usersRepository.findByName(userName)
-                                             .map(user -> tweetsRepository.findByUser(user))
+                                             .map(tweetsRepository::findByUser)
                                              .orElse(emptyList());
         return tweets
                 .stream()
-                .sorted(reverseOrder(Comparator.comparing(Tweet::getCreatedAt)))
+                .sorted(reverseOrder(comparing(Tweet::getCreatedAt)))
                 .collect(Collectors.toList());
     }
 

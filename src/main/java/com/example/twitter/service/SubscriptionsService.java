@@ -25,20 +25,25 @@ public class SubscriptionsService {
         this.usersRepository = usersRepository;
     }
 
+    public List<Subscription> subscriptionsForUser(final long userId) {
+        return subscriptionsRepository.findByFollowerId(userId);
+    }
+
     public Optional<Subscription> createSubscription(@NonNull final String followerName,
                                                      @NonNull final String followeeName) {
         Optional<User> follower = usersRepository.findByName(followerName);
         Optional<User> followee = usersRepository.findByName(followeeName);
 
         if (follower.isPresent() && followee.isPresent()) {
-            return Optional.of(subscriptionsRepository.save(new Subscription(follower.get().getId(),
-                                                                             followee.get().getId())));
+            return Optional.of(getOrCreateSubscription(follower.get().getId(),
+                                                       followee.get().getId()));
         }
         return Optional.empty();
     }
 
-    public List<Subscription> subscriptionsForUser(final long userId) {
-        return subscriptionsRepository.findByFollowerId(userId);
+    private Subscription getOrCreateSubscription(long followerId, long followeeId) {
+        return subscriptionsRepository.findByFollowerIdAndFolloweeId(followerId, followeeId)
+                                      .orElse(subscriptionsRepository.save(new Subscription(followerId, followeeId)));
     }
 
 }

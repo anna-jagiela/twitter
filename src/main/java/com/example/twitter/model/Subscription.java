@@ -1,7 +1,6 @@
 package com.example.twitter.model;
 
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
@@ -14,7 +13,6 @@ import static lombok.AccessLevel.PACKAGE;
 
 @Entity
 @EqualsAndHashCode
-@Getter
 @NoArgsConstructor(access = PACKAGE)
 public class Subscription {
 
@@ -30,6 +28,14 @@ public class Subscription {
                         @NonNull final Long followeeId) {
        this.followerId = followerId;
        this.followeeId = followeeId;
+    }
+
+    public Long getFollowerId() {
+        return followerId;
+    }
+
+    public Long getFolloweeId() {
+        return followeeId;
     }
 
 }

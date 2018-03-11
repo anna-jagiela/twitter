@@ -1,7 +1,9 @@
 package com.example.twitter.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -12,7 +14,6 @@ import static lombok.AccessLevel.PACKAGE;
 
 @Entity
 @EqualsAndHashCode
-@Getter
 @NoArgsConstructor(access = PACKAGE)
 public class User {
 
@@ -25,6 +26,14 @@ public class User {
 
     public User(@NonNull String name) {
         this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
     }
 
 }

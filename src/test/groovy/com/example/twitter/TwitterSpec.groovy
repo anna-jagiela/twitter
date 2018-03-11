@@ -1,9 +1,12 @@
 package com.example.twitter
 
+import com.example.twitter.model.Tweet
+import com.example.twitter.model.User
 import com.example.twitter.repository.TweetsRepository
 import com.example.twitter.repository.UsersRepository
+import com.fasterxml.jackson.core.type.TypeReference
 import org.springframework.beans.factory.annotation.Autowired
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 class TwitterSpec extends TwitterBaseSpec {
@@ -16,35 +19,30 @@ class TwitterSpec extends TwitterBaseSpec {
 
     def "users should be able to post tweets"() {
         when:
-        def firstTweetResult = content(postToWall("user1", "First tweet of user1"))
+        def postResult = postToWall("user1", "First tweet of user1")
+        def firstTweet = dejsonize(content(postResult), Tweet)
 
         then:
-        firstTweetResult.user.id == 1
-        firstTweetResult.user.name == "user1"
-        firstTweetResult.message == "First tweet of user1"
+        firstTweet.user.id == 1
+        firstTweet.user.name == "user1"
+        firstTweet.message == "First tweet of user1"
 
         and:
         usersRepository.count() == 1
         tweetsRepository.count() == 1
 
         when:
-        def secondTweetResult = content(postToWall("user2" , "First tweet of user2"))
+        def anotherPostResult = postToWall("user2" , "First tweet of user2")
+        def secondTweet = dejsonize(content(anotherPostResult), Tweet)
 
         then:
-        secondTweetResult.user.id == 2
-        secondTweetResult.user.name == "user2"
-        secondTweetResult.message == "First tweet of user2"
+        secondTweet.user.id == 2
+        secondTweet.user.name == "user2"
+        secondTweet.message == "First tweet of user2"
 
         and:
         usersRepository.count() == 2
         tweetsRepository.count() == 2
-    }
-
-    def "user should not be able to post tweets longer than 140 characters"() {
-        expect:
-        mvc.perform(post("/wall").header("Authorization", "user")
-                                            .content(randomDescription(141)))
-                .andExpect(status().isUnprocessableEntity())
     }
 
     def "user should be able to see the tweets that were posted in reverse chronological order"() {
@@ -54,12 +52,12 @@ class TwitterSpec extends TwitterBaseSpec {
         postToWall("userA", "Second tweet of userA")
 
         when:
-        def getResult = content(readFromWall("userA"))
+        def tweets = dejsonize(content(readFromWall("userA")), new TypeReference<List<Tweet>>(){})
 
         then:
-        getResult.size() == 2
-        getResult.get(0).message == "Second tweet of userA"
-        getResult.get(1).message == "First tweet of userA"
+        tweets.size() == 2
+        tweets.get(0).message == "Second tweet of userA"
+        tweets.get(1).message == "First tweet of userA"
     }
 
     def "should allow users to follow other users and see their tweets"() {
@@ -69,13 +67,40 @@ class TwitterSpec extends TwitterBaseSpec {
         postToWall("user1", "Second tweet of user1")
 
         when:
-        followUser("user2", "user1")
-        def timeLineResult = content(readFromTimeLine("user2"))
+        def otherUsers = dejsonize(content(listOtherUsers("user2")), new TypeReference<List<User>>() {})
 
         then:
-        timeLineResult.size() == 2
-        timeLineResult.get(0).message == "Second tweet of user1"
-        timeLineResult.get(1).message == "First tweet of user1"
+        otherUsers.size() == 1
+
+        when:
+        followUser("user2", otherUsers.first().name)
+        def timeLineMessages = dejsonize(content(readFromTimeLine("user2")), new TypeReference<List<Tweet>>() {})
+
+        then:
+        timeLineMessages.size() == 2
+        timeLineMessages.get(0).message == "Second tweet of user1"
+        timeLineMessages.get(1).message == "First tweet of user1"
+    }
+
+    def "user should not be able to post tweets longer than 140 characters"() {
+        expect:
+        postToWall("user", randomDescription(141), status().isUnprocessableEntity())
+    }
+
+    def "user should not be able to follow non-existing user"() {
+        given:
+        postToWall("user1", "First tweet of user1")
+
+        expect:
+        followUser("user1", "user2", status().isNotFound())
+    }
+
+    def "user should not be able to follow himself"() {
+        given:
+        postToWall("user1", "First tweet of user1")
+
+        expect:
+        followUser("user1", "user1", status().isConflict())
     }
     
 }
