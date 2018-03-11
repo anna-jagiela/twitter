@@ -35,7 +35,7 @@ In order to post a message send `HTTP POST` request to `wall` endpoint with mess
 
 Example request:
 ```
-POST /wall HTTP/1.1
+POST http://localhost:8080/wall HTTP/1.1
 Content-Type: application/json
 Accept: application/json
 Authorization: user1
@@ -66,7 +66,7 @@ In order to get the messages send `HTTP GET` request to `wall` endpoint.
 
 Example request:
 ```
-GET /wall HTTP/1.1
+GET http://localhost:8080/wall HTTP/1.1
 Content-Type: application/json
 Accept: application/json
 Authorization: user1
